@@ -1,5 +1,8 @@
 #include "Engine.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 enum EBrick_Type
 {
     None,
@@ -88,6 +91,61 @@ void Draw_Brick(HDC hdc, int x, int y, EBrick_Type brick_type)
     RoundRect(hdc, x * Global_Scale, y * Global_Scale, (x + Brick_Width) * Global_Scale, (y + Brick_Height) * Global_Scale, 2 * Global_Scale, 2 * Global_Scale);
 }
 //--------------------------------------------------------------------------------------------------------------
+void Draw_Brick_Letter(HDC hdc, int x, int y, int rotation_step)
+{
+    
+    double offset;
+    float rotation_angle = 2.0f * (float)M_PI / 16.0f * (float)rotation_step; //Converting steps to an angle
+    int brick_half_height = Brick_Height * Global_Scale / 2;
+    int back_part_offset;
+    XFORM xform, old_xform;
+
+    if (rotation_step == 4 || rotation_step == 12)
+    {
+        //The background
+        SelectObject(hdc, Brick_Red_Pen);
+        SelectObject(hdc, Brick_Red_Brush);
+
+        Rectangle(hdc, x, y + brick_half_height - Global_Scale, x + Brick_Width * Global_Scale, y + brick_half_height);
+        
+        //The foreground
+        SelectObject(hdc, Brick_Blue_Pen);
+        SelectObject(hdc, Brick_Blue_Brush);
+
+        Rectangle(hdc, x, y + brick_half_height, x + Brick_Width * Global_Scale, y + brick_half_height + Global_Scale - 1);
+    }
+    else
+    {
+        SetGraphicsMode(hdc, GM_ADVANCED);
+
+        //Setting up the Letter Flip Matrix
+        xform.eM11 = 1;
+        xform.eM12 = 0;
+        xform.eM21 = 0;
+        xform.eM22 = cosf(rotation_angle);
+        xform.eDx = (float)x;
+        xform.eDy = (float)y + (float)brick_half_height;
+        GetWorldTransform(hdc, &old_xform);
+        SetWorldTransform(hdc, &xform);
+
+        //The background
+        SelectObject(hdc, Brick_Red_Pen);
+        SelectObject(hdc, Brick_Red_Brush);
+
+        offset = 3.0 * (1.0 - fabs(xform.eM22)) * (double)Global_Scale;
+        back_part_offset = (int)round(offset);
+        Rectangle(hdc, 0, -brick_half_height - back_part_offset, Brick_Width * Global_Scale, brick_half_height - back_part_offset);
+
+        //The foreground
+        SelectObject(hdc, Brick_Blue_Pen);
+        SelectObject(hdc, Brick_Blue_Brush);
+
+        Rectangle(hdc, 0, -brick_half_height, Brick_Width * Global_Scale, brick_half_height);
+
+        SetWorldTransform(hdc, &old_xform);
+    }
+}
+//--------------------------------------------------------------------------------------------------------------
 void Draw_Level(HDC hdc)
 {// Draw all bricks on the level
     for (int i = 0; i < 14; i++)
@@ -121,8 +179,11 @@ void Draw_Platform(HDC hdc, int x, int y)
 void Draw_Frame(HDC hdc)
 {// Draw screen game
 
-    Draw_Level(hdc);
-    Draw_Platform(hdc, 50, 100);
+    //Draw_Level(hdc);
 
+    //Draw_Platform(hdc, 50, 100);
+
+    for (int i = 0; i < 16; i++)
+        Draw_Brick_Letter(hdc, 20 + i * Cell_Width * Global_Scale, 100, i);
 }
 //--------------------------------------------------------------------------------------------------------------
