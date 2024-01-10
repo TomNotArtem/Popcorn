@@ -5,9 +5,9 @@
 
 enum EBrick_Type
 {
-    None,
-    Red,
-    Blue
+    EBT_None,
+    EBT_Red,
+    EBT_Blue
 };
 
 HPEN Highlight_Pen, Brick_Red_Pen, Brick_Blue_Pen, Platform_Circle_Pen, Platform_Inner_Pen;
@@ -68,15 +68,15 @@ void Draw_Brick(HDC hdc, int x, int y, EBrick_Type brick_type)
 
     switch (brick_type)
     {
-    case None:
+    case EBT_None:
         return;
 
-    case Red:
+    case EBT_Red:
         pen = Brick_Red_Pen;
         brush = Brick_Red_Brush;
         break;
 
-    case Blue:
+    case EBT_Blue:
         pen = Brick_Blue_Pen;
         brush = Brick_Blue_Brush;
         break;
@@ -184,6 +184,9 @@ void Draw_Frame(HDC hdc)
     //Draw_Platform(hdc, 50, 100);
 
     for (int i = 0; i < 16; i++)
+    {
         Draw_Brick_Letter(hdc, 20 + i * Cell_Width * Global_Scale, 100, i);
+
+    }
 }
 //--------------------------------------------------------------------------------------------------------------
