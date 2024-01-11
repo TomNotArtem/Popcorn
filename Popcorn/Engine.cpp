@@ -27,18 +27,21 @@ const int Cell_Width = 16;
 const int Cell_Height = 8;
 const int Level_X_Offset = 8;
 const int Level_Y_Offset = 6;
+const int Level_Width = 14; // Level width in cells
+const int Level_Height = 12; // Level height in cells
 const int Circle_Size = 7;
 const int Platform_Y_pos = 185;
 const int Platform_Height = 7;
 
 int Inner_Width = 21;
 int Platform_X_pos = 0; 
-int Platform_X_Step = Global_Scale;
+int Platform_X_Step = Global_Scale * 2;
 int Platform_Width = 28;
 
 RECT Platform_Rect, Prev_Patform_Rect;
+RECT Level_Rect;
 
-char Level_01[14][12] =
+char Level_01[Level_Width][Level_Height] =
 {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -66,7 +69,7 @@ void Redraw_Platform()
 {
     Prev_Patform_Rect = Platform_Rect;
 
-    Platform_Rect.left = Platform_X_pos * Global_Scale;
+    Platform_Rect.left = (Level_X_Offset + Platform_X_pos) * Global_Scale;
     Platform_Rect.top = Platform_Y_pos * Global_Scale;
     Platform_Rect.right = (Platform_Rect.left + Platform_Width) * Global_Scale;
     Platform_Rect.bottom = (Platform_Rect.top + Platform_Height) * Global_Scale;
@@ -77,7 +80,7 @@ void Redraw_Platform()
 }
 //--------------------------------------------------------------------------------------------------------------
 void Init_Engine(HWND hwnd)
-{// start up settings
+{// Start up settings
 
     Hwnd = hwnd;
 
@@ -89,6 +92,12 @@ void Init_Engine(HWND hwnd)
     Create_Pen_Brush(85, 255, 255, Brick_Blue_Pen, Brick_Blue_Brush);
     Create_Pen_Brush(151, 0, 0, Platform_Circle_Pen, Platform_Circle_Brush);
     Create_Pen_Brush(0, 128, 192, Platform_Inner_Pen, Platform_Inner_Brush);
+
+    Level_Rect.left = Level_X_Offset * Global_Scale;
+    Level_Rect.left = Level_Y_Offset * Global_Scale;
+    Level_Rect.right = Level_Rect.left + Cell_Width * Level_Width * Global_Scale;
+    Level_Rect.bottom = Level_Rect.top + Cell_Height * Level_Height * Global_Scale;
+
 
     Redraw_Platform();
    
@@ -148,7 +157,7 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
 {
     bool switch_color;
     double offset;
-    float rotation_angle; //Converting steps to an angle
+    float rotation_angle; // Converting steps to an angle
     int brick_half_height = Brick_Height * Global_Scale / 2;
     int back_part_offset;
     HPEN front_pen, back_pen;
@@ -158,7 +167,7 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
     if (!(brick_type == EBT_Blue || brick_type == EBT_Red))
         return; // Falling letters can only be made of bricks of this color
 
-    //Correction of rotation pitch and rotation angle
+    // Correction of rotation pitch and rotation angle
     rotation_step = rotation_step % 16;
 
     if (rotation_step < 8)
@@ -181,13 +190,13 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
 
     if (rotation_step == 4 || rotation_step == 12)
     {
-        //Draw background
+        // Draw background
         SelectObject(hdc, back_pen);
         SelectObject(hdc, back_brush);
 
         Rectangle(hdc, x, y + brick_half_height - Global_Scale, x + Brick_Width * Global_Scale, y + brick_half_height);
         
-        //Draw foreground
+        // Draw foreground
         SelectObject(hdc, front_pen);
         SelectObject(hdc, front_brush);
 
@@ -197,7 +206,7 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
     {
         SetGraphicsMode(hdc, GM_ADVANCED);
 
-        //Setting up the Letter Flip Matrix
+        // Setting up the Letter Flip Matrix
         xform.eM11 = 1;
         xform.eM12 = 0;
         xform.eM21 = 0;
@@ -207,7 +216,7 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
         GetWorldTransform(hdc, &old_xform);
         SetWorldTransform(hdc, &xform);
 
-        //Draw background
+        // Draw background
         SelectObject(hdc, back_pen);
         SelectObject(hdc, back_brush);
 
@@ -215,7 +224,7 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
         back_part_offset = (int)round(offset);
         Rectangle(hdc, 0, -brick_half_height - back_part_offset, Brick_Width * Global_Scale, brick_half_height - back_part_offset);
 
-        //Draw foreground
+        // Draw foreground
         SelectObject(hdc, front_pen);
         SelectObject(hdc, front_brush);
 
@@ -249,32 +258,37 @@ void Draw_Platform(HDC hdc, int x, int y)
 
     Rectangle(hdc, Prev_Patform_Rect.left, Prev_Patform_Rect.top, Prev_Patform_Rect.right, Prev_Patform_Rect.bottom);
 
-    //1. Draw the side balls
+    // 1. Draw the side balls
     SelectObject(hdc, Platform_Circle_Pen);
     SelectObject(hdc, Platform_Circle_Brush);
 
     Ellipse(hdc, x * Global_Scale, y * Global_Scale, (x + Circle_Size) * Global_Scale, (y + Circle_Size) * Global_Scale);
     Ellipse(hdc, (x + Inner_Width) * Global_Scale, y * Global_Scale, (x + Inner_Width + Circle_Size) * Global_Scale, (y + Circle_Size) * Global_Scale);
 
-    //2. Draw a highlight
+    // 2. Draw a highlight
 
     SelectObject(hdc, Highlight_Pen);
     Arc(hdc, (x + 1) * Global_Scale, (y + 1) * Global_Scale, (x + Circle_Size - 1) * Global_Scale, (y + Circle_Size - 1) * Global_Scale,
              (x + 1 + 1)* Global_Scale, (y + 1)* Global_Scale, (x + 1) * Global_Scale, (y + 1 + 2) * Global_Scale);
 
-    //3. Draw the middle part of the platform
+    // 3. Draw the middle part of the platform
     SelectObject(hdc, Platform_Inner_Pen);
     SelectObject(hdc, Platform_Inner_Brush);
 
     RoundRect(hdc, (x + 4) * Global_Scale, (y + 1) * Global_Scale, (x + 4 + Inner_Width - 1) * Global_Scale, (y + 1 + 5) * Global_Scale, 3 * Global_Scale, 3 * Global_Scale);
 }
 //--------------------------------------------------------------------------------------------------------------
-void Draw_Frame(HDC hdc)
+void Draw_Frame(HDC hdc, RECT &paint_area)
 {// Draw screen game
 
-    //Draw_Level(hdc);
+    RECT intersection_rect;
 
-    Draw_Platform(hdc, Platform_X_pos, Platform_Y_pos);
+    // Draw only where there are changes
+    if (IntersectRect(&intersection_rect, &paint_area, &Level_Rect))
+        Draw_Level(hdc);
+
+    if (IntersectRect(&intersection_rect, &paint_area, &Platform_Rect))
+        Draw_Platform(hdc, Level_X_Offset + Platform_X_pos, Platform_Y_pos);
 
     //for (int i = 0; i < 16; i++)
     //{
