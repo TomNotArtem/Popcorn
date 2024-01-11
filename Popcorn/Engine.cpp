@@ -16,8 +16,9 @@ enum EBrick_Type
     EBT_Blue
 };
 
-HPEN Highlight_Pen, Letter_Pen, Brick_Red_Pen, Brick_Blue_Pen, Platform_Circle_Pen, Platform_Inner_Pen;
-HBRUSH Brick_Red_Brush, Brick_Blue_Brush, Platform_Circle_Brush, Platform_Inner_Brush;
+HWND Hwnd;
+HPEN BG_Pen, Highlight_Pen, Letter_Pen, Brick_Red_Pen, Brick_Blue_Pen, Platform_Circle_Pen, Platform_Inner_Pen;
+HBRUSH BG_Brush, Brick_Red_Brush, Brick_Blue_Brush, Platform_Circle_Brush, Platform_Inner_Brush;
 
 const int Global_Scale = 3;
 const int Brick_Width = 15;
@@ -27,8 +28,15 @@ const int Cell_Height = 8;
 const int Level_X_Offset = 8;
 const int Level_Y_Offset = 6;
 const int Circle_Size = 7;
+const int Platform_Y_pos = 185;
+const int Platform_Height = 7;
 
 int Inner_Width = 21;
+int Platform_X_pos = 0; 
+int Platform_X_Step = Global_Scale;
+int Platform_Width = 28;
+
+RECT Platform_Rect, Prev_Patform_Rect;
 
 char Level_01[14][12] =
 {
@@ -53,18 +61,36 @@ void Create_Pen_Brush(unsigned char r, unsigned char g, unsigned char b, HPEN &p
     pen = CreatePen(PS_SOLID, 0, RGB(r, g, b));
     brush = CreateSolidBrush(RGB(r, g, b));
 
+}//--------------------------------------------------------------------------------------------------------------
+void Redraw_Platform()
+{
+    Prev_Patform_Rect = Platform_Rect;
+
+    Platform_Rect.left = Platform_X_pos * Global_Scale;
+    Platform_Rect.top = Platform_Y_pos * Global_Scale;
+    Platform_Rect.right = (Platform_Rect.left + Platform_Width) * Global_Scale;
+    Platform_Rect.bottom = (Platform_Rect.top + Platform_Height) * Global_Scale;
+
+
+    InvalidateRect(Hwnd, &Platform_Rect, FALSE);
+    InvalidateRect(Hwnd, &Prev_Patform_Rect, FALSE);
 }
 //--------------------------------------------------------------------------------------------------------------
-void Init()
+void Init_Engine(HWND hwnd)
 {// start up settings
+
+    Hwnd = hwnd;
 
     Highlight_Pen = CreatePen(PS_SOLID, 0, RGB(255, 255, 255));
     Letter_Pen = CreatePen(PS_SOLID, Global_Scale, RGB(255, 255, 255));
 
+    Create_Pen_Brush(15, 63, 31, BG_Pen, BG_Brush);
     Create_Pen_Brush(255, 85, 85, Brick_Red_Pen, Brick_Red_Brush);
     Create_Pen_Brush(85, 255, 255, Brick_Blue_Pen, Brick_Blue_Brush);
     Create_Pen_Brush(151, 0, 0, Platform_Circle_Pen, Platform_Circle_Brush);
     Create_Pen_Brush(0, 128, 192, Platform_Inner_Pen, Platform_Inner_Brush);
+
+    Redraw_Platform();
    
 }
 //--------------------------------------------------------------------------------------------------------------
@@ -218,6 +244,10 @@ void Draw_Level(HDC hdc)
 //--------------------------------------------------------------------------------------------------------------
 void Draw_Platform(HDC hdc, int x, int y)
 { 
+    SelectObject(hdc, BG_Pen);
+    SelectObject(hdc, BG_Brush);
+
+    Rectangle(hdc, Prev_Patform_Rect.left, Prev_Patform_Rect.top, Prev_Patform_Rect.right, Prev_Patform_Rect.bottom);
 
     //1. Draw the side balls
     SelectObject(hdc, Platform_Circle_Pen);
@@ -244,13 +274,31 @@ void Draw_Frame(HDC hdc)
 
     //Draw_Level(hdc);
 
-    //Draw_Platform(hdc, 50, 100);
+    Draw_Platform(hdc, Platform_X_pos, Platform_Y_pos);
 
-    for (int i = 0; i < 16; i++)
+    //for (int i = 0; i < 16; i++)
+    //{
+    //    Draw_Brick_Letter(hdc, 20 + i * Cell_Width * Global_Scale, 100, EBT_Blue, ELT_O, i);
+    //    Draw_Brick_Letter(hdc, 20 + i * Cell_Width * Global_Scale, 130, EBT_Red, ELT_O, i);
+
+    //}
+} //--------------------------------------------------------------------------------------------------------------
+
+int On_Key_Down(EKey_Type key_type)
+{
+    switch (key_type)
     {
-        Draw_Brick_Letter(hdc, 20 + i * Cell_Width * Global_Scale, 100, EBT_Blue, ELT_O, i);
-        Draw_Brick_Letter(hdc, 20 + i * Cell_Width * Global_Scale, 130, EBT_Red, ELT_O, i);
-
+    case EKT_Left:
+        Platform_X_pos -= Platform_X_Step;
+        Redraw_Platform();
+        break;
+    case EKT_Right:
+        Platform_X_pos += Platform_X_Step;
+        Redraw_Platform();
+        break;
+    case EKT_Space:
+        break;
     }
+    return 0;
 }
 //--------------------------------------------------------------------------------------------------------------
