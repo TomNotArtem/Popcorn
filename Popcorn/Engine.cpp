@@ -27,8 +27,8 @@ const int Cell_Width = 16;
 const int Cell_Height = 8;
 const int Level_X_Offset = 8;
 const int Level_Y_Offset = 6;
-const int Level_Width = 14; // Level width in cells
-const int Level_Height = 12; // Level height in cells
+const int Level_Width = 12; // Level width in cells
+const int Level_Height = 14; // Level height in cells
 const int Circle_Size = 7;
 const int Platform_Y_pos = 185;
 const int Platform_Height = 7;
@@ -48,7 +48,7 @@ RECT Platform_Rect, Prev_Patform_Rect;
 RECT Level_Rect;
 RECT Ball_Rect, Prev_Ball_Rect;
 
-char Level_01[Level_Width][Level_Height] =
+char Level_01[Level_Height][Level_Width] =
 {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -256,8 +256,8 @@ void Draw_Brick_Letter(HDC hdc, int x, int y, EBrick_Type brick_type, ELetter_Ty
 //--------------------------------------------------------------------------------------------------------------
 void Draw_Level(HDC hdc)
 {// Draw all bricks on the level
-    for (int i = 0; i < 14; i++)
-        for (int j = 0; j < 12; j++)
+    for (int i = 0; i < Level_Height; i++)
+        for (int j = 0; j < Level_Width; j++)
             Draw_Brick(hdc, Level_X_Offset + j * Cell_Width, Level_Y_Offset + i * Cell_Height, (EBrick_Type)Level_01[i][j]);
 }
 //--------------------------------------------------------------------------------------------------------------
