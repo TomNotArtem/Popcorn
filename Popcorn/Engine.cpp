@@ -17,8 +17,8 @@ enum EBrick_Type
 };
 
 HWND Hwnd;
-HPEN BG_Pen, Highlight_Pen, Letter_Pen, Brick_Red_Pen, Brick_Blue_Pen, Platform_Circle_Pen, Platform_Inner_Pen, Ball_Pen;
-HBRUSH BG_Brush, Brick_Red_Brush, Brick_Blue_Brush, Platform_Circle_Brush, Platform_Inner_Brush, Ball_Brush;
+HPEN BG_Pen, Highlight_Pen, Letter_Pen, Brick_Red_Pen, Brick_Blue_Pen, Platform_Circle_Pen, Platform_Inner_Pen, Ball_Pen, Border_Blue_Pen, Border_White_Pen;
+HBRUSH BG_Brush, Brick_Red_Brush, Brick_Blue_Brush, Platform_Circle_Brush, Platform_Inner_Brush, Ball_Brush, Border_Blue_Brush, Border_White_Brush;
 
 const int Global_Scale = 3;
 const int Brick_Width = 15;
@@ -100,6 +100,8 @@ void Init_Engine(HWND hwnd)
     Create_Pen_Brush(151, 0, 0, Platform_Circle_Pen, Platform_Circle_Brush);
     Create_Pen_Brush(0, 128, 192, Platform_Inner_Pen, Platform_Inner_Brush);
     Create_Pen_Brush(255, 255, 255, Ball_Pen, Ball_Brush);
+    Create_Pen_Brush(85, 255, 255, Border_Blue_Pen, Border_Blue_Brush);
+    Create_Pen_Brush(255, 255, 255, Border_White_Pen, Border_White_Brush);
 
     Level_Rect.left = Level_X_Offset * Global_Scale;
     Level_Rect.left = Level_Y_Offset * Global_Scale;
@@ -303,6 +305,55 @@ void Draw_Ball(HDC hdc, RECT& paint_area)
     Ellipse(hdc, Ball_Rect.left, Ball_Rect.top, Ball_Rect.right - 1, Ball_Rect.bottom - 1);
 }
 //--------------------------------------------------------------------------------------------------------------
+void Draw_Border(HDC hdc, int x, int y, bool top_border)
+{ //Draw element of border level
+    
+    // Main line
+    SelectObject(hdc, Border_Blue_Pen);
+    SelectObject(hdc, Border_Blue_Brush);
+
+    if (top_border)
+    Rectangle(hdc, x * Global_Scale, (y + 1) * Global_Scale, (x + 4) * Global_Scale, (y + 4) * Global_Scale);
+    else
+    Rectangle(hdc, (x + 1) * Global_Scale, y * Global_Scale, (x + 4) * Global_Scale, (y + 4) * Global_Scale);
+
+    // White part of the line
+    SelectObject(hdc, Border_White_Pen);
+    SelectObject(hdc, Border_White_Brush);
+
+    if (top_border)
+    Rectangle(hdc, x * Global_Scale, y * Global_Scale, (x + 4) * Global_Scale, (y + 1) * Global_Scale);
+    else
+    Rectangle(hdc, x * Global_Scale, y * Global_Scale, (x + 1) * Global_Scale, (y + 4) * Global_Scale);
+
+    // Perforation on line
+    SelectObject(hdc, BG_Pen);
+    SelectObject(hdc, BG_Brush);
+
+    if (top_border)
+    Rectangle(hdc, (x + 2) * Global_Scale, (y + 2) * Global_Scale, (x + 3) * Global_Scale, (y + 3) * Global_Scale);
+    else
+    Rectangle(hdc, (x + 2) * Global_Scale, (y + 1) * Global_Scale, (x + 3) * Global_Scale, (y + 2) * Global_Scale);
+
+}
+//--------------------------------------------------------------------------------------------------------------
+void Draw_Bounds(HDC hdc, RECT& paint_area)
+{//Draw border of level
+    
+
+    // 1. Line on the left
+    for (int i = 0; i < 50; i++)
+        Draw_Border(hdc, 2, 1 + i * 4, false);
+
+    // 2. Line on the right
+    for (int i = 0; i < 50; i++)
+        Draw_Border(hdc, 201, 1 + i * 4, false);
+
+    // 3. Line on the top
+    for (int i = 0; i < 50; i++)
+        Draw_Border(hdc, 3 + i * 4, 0, true);
+}
+//--------------------------------------------------------------------------------------------------------------
 void Draw_Frame(HDC hdc, RECT &paint_area)
 {// Draw screen game
 
@@ -324,7 +375,7 @@ void Draw_Frame(HDC hdc, RECT &paint_area)
     if (IntersectRect(&intersection_rect, &paint_area, &Ball_Rect))
         Draw_Ball(hdc, paint_area);
 
-
+    Draw_Bounds(hdc, paint_area);
 } //--------------------------------------------------------------------------------------------------------------
 
 int On_Key_Down(EKey_Type key_type)
