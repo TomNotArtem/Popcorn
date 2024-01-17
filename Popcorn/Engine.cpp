@@ -33,11 +33,13 @@ const int Circle_Size = 7;
 const int Platform_Y_pos = 185;
 const int Platform_Height = 7;
 const int Ball_Size = 4;
-const int Max_X_Pos = Level_X_Offset + Cell_Width * Level_Width - Ball_Size;
+const int Max_X_Pos = Level_X_Offset + Cell_Width * Level_Width;
 const int Max_Y_Pos = 199 - Ball_Size;
+const int Border_X_Offset = 6;
+const int Border_Y_Offset = 4;
 
 int Inner_Width = 21;
-int Platform_X_pos = 0; 
+int Platform_X_pos = Border_X_Offset;
 int Platform_X_Step = Global_Scale * 2;
 int Platform_Width = 28;
 
@@ -76,7 +78,7 @@ void Redraw_Platform()
 {
     Prev_Patform_Rect = Platform_Rect;
 
-    Platform_Rect.left = (Level_X_Offset + Platform_X_pos) * Global_Scale;
+    Platform_Rect.left = Platform_X_pos * Global_Scale;
     Platform_Rect.top = Platform_Y_pos * Global_Scale;
     Platform_Rect.right = (Platform_Rect.left + Platform_Width) * Global_Scale;
     Platform_Rect.bottom = (Platform_Rect.top + Platform_Height) * Global_Scale;
@@ -364,7 +366,7 @@ void Draw_Frame(HDC hdc, RECT &paint_area)
         Draw_Level(hdc);
 
     if (IntersectRect(&intersection_rect, &paint_area, &Platform_Rect))
-        Draw_Platform(hdc, Level_X_Offset + Platform_X_pos, Platform_Y_pos);
+        Draw_Platform(hdc, Platform_X_pos, Platform_Y_pos);
 
     //for (int i = 0; i < 16; i++)
     //{
@@ -384,12 +386,21 @@ int On_Key_Down(EKey_Type key_type)
     {
     case EKT_Left:
         Platform_X_pos -= Platform_X_Step;
+
+        if (Platform_X_pos <= Border_X_Offset)
+            Platform_X_pos = Border_X_Offset;
+
         Redraw_Platform();
         break;
     case EKT_Right:
         Platform_X_pos += Platform_X_Step;
+
+        if (Platform_X_pos >= Max_X_Pos - Platform_Width + 1)
+            Platform_X_pos = Max_X_Pos - Platform_Width + 1;
+
         Redraw_Platform();
         break;
+
     case EKT_Space:
         break;
     }
