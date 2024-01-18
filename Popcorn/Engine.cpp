@@ -30,7 +30,7 @@ const int Level_Y_Offset = 6;
 const int Level_Width = 12; // Level width in cells
 const int Level_Height = 14; // Level height in cells
 const int Circle_Size = 7;
-const int Platform_Y_pos = 185;
+const int Platform_Y_Pos = 185;
 const int Platform_Height = 7;
 const int Ball_Size = 4;
 const int Max_X_Pos = Level_X_Offset + Cell_Width * Level_Width;
@@ -39,11 +39,11 @@ const int Border_X_Offset = 6;
 const int Border_Y_Offset = 4;
 
 int Inner_Width = 21;
-int Platform_X_pos = Border_X_Offset;
+int Platform_X_Pos = Border_X_Offset;
 int Platform_X_Step = Global_Scale * 2;
 int Platform_Width = 28;
 
-int Ball_X_pos = 20, Ball_Y_pos = 170;
+int Ball_X_Pos = 20, Ball_Y_Pos = 170;
 double Ball_Speed = 3.0, Ball_Direction = M_PI - M_PI_4;
 
 RECT Platform_Rect, Prev_Patform_Rect;
@@ -78,14 +78,14 @@ void Redraw_Platform()
 {
     Prev_Patform_Rect = Platform_Rect;
 
-    Platform_Rect.left = Platform_X_pos * Global_Scale;
-    Platform_Rect.top = Platform_Y_pos * Global_Scale;
-    Platform_Rect.right = (Platform_Rect.left + Platform_Width) * Global_Scale;
-    Platform_Rect.bottom = (Platform_Rect.top + Platform_Height) * Global_Scale;
+    Platform_Rect.left = Platform_X_Pos * Global_Scale;
+    Platform_Rect.top = Platform_Y_Pos * Global_Scale;
+    Platform_Rect.right = Platform_Rect.left + Platform_Width * Global_Scale;
+    Platform_Rect.bottom = Platform_Rect.top + Platform_Height * Global_Scale;
 
 
-    InvalidateRect(Hwnd, &Platform_Rect, FALSE);
     InvalidateRect(Hwnd, &Prev_Patform_Rect, FALSE);
+    InvalidateRect(Hwnd, &Platform_Rect, FALSE);
 }
 //--------------------------------------------------------------------------------------------------------------
 void Init_Engine(HWND hwnd)
@@ -106,7 +106,7 @@ void Init_Engine(HWND hwnd)
     Create_Pen_Brush(255, 255, 255, Border_White_Pen, Border_White_Brush);
 
     Level_Rect.left = Level_X_Offset * Global_Scale;
-    Level_Rect.left = Level_Y_Offset * Global_Scale;
+    Level_Rect.top = Level_Y_Offset * Global_Scale;
     Level_Rect.right = Level_Rect.left + Cell_Width * Level_Width * Global_Scale;
     Level_Rect.bottom = Level_Rect.top + Cell_Height * Level_Height * Global_Scale;
 
@@ -292,7 +292,7 @@ void Draw_Platform(HDC hdc, int x, int y)
     RoundRect(hdc, (x + 4) * Global_Scale, (y + 1) * Global_Scale, (x + 4 + Inner_Width - 1) * Global_Scale, (y + 1 + 5) * Global_Scale, 3 * Global_Scale, 3 * Global_Scale);
 }
 //--------------------------------------------------------------------------------------------------------------
-void Draw_Ball(HDC hdc, RECT& paint_area)
+void Draw_Ball(HDC hdc, RECT &paint_area)
 {
     // 1. Clean BG
     SelectObject(hdc, BG_Pen);
@@ -339,7 +339,7 @@ void Draw_Border(HDC hdc, int x, int y, bool top_border)
 
 }
 //--------------------------------------------------------------------------------------------------------------
-void Draw_Bounds(HDC hdc, RECT& paint_area)
+void Draw_Bounds(HDC hdc, RECT &paint_area)
 {//Draw border of level
     
 
@@ -366,7 +366,7 @@ void Draw_Frame(HDC hdc, RECT &paint_area)
         Draw_Level(hdc);
 
     if (IntersectRect(&intersection_rect, &paint_area, &Platform_Rect))
-        Draw_Platform(hdc, Platform_X_pos, Platform_Y_pos);
+        Draw_Platform(hdc, Platform_X_Pos, Platform_Y_Pos);
 
     //for (int i = 0; i < 16; i++)
     //{
@@ -385,18 +385,18 @@ int On_Key_Down(EKey_Type key_type)
     switch (key_type)
     {
     case EKT_Left:
-        Platform_X_pos -= Platform_X_Step;
+        Platform_X_Pos -= Platform_X_Step;
 
-        if (Platform_X_pos <= Border_X_Offset)
-            Platform_X_pos = Border_X_Offset;
+        if (Platform_X_Pos <= Border_X_Offset)
+            Platform_X_Pos = Border_X_Offset;
 
         Redraw_Platform();
         break;
     case EKT_Right:
-        Platform_X_pos += Platform_X_Step;
+        Platform_X_Pos += Platform_X_Step;
 
-        if (Platform_X_pos >= Max_X_Pos - Platform_Width + 1)
-            Platform_X_pos = Max_X_Pos - Platform_Width + 1;
+        if (Platform_X_Pos >= Max_X_Pos - Platform_Width + 1)
+            Platform_X_Pos = Max_X_Pos - Platform_Width + 1;
 
         Redraw_Platform();
         break;
@@ -405,19 +405,41 @@ int On_Key_Down(EKey_Type key_type)
         break;
     }
     return 0;
+}//--------------------------------------------------------------------------------------------------------------
+void Check_Level_Brick_Hit(int &next_y_pos)
+{
+    // Correction the position when reflected of the brick
+    int brick_y_pos = Level_Y_Offset + Level_Height * Cell_Height;
+
+    for (int i = Level_Height - 1; i >= 0; i--)
+    {
+        for (int j = 0; j < Level_Width; j++)
+        {
+            if (Level_01[i][j] == 0)
+                continue;
+
+            if (next_y_pos < brick_y_pos)
+            {
+                next_y_pos = brick_y_pos - (next_y_pos - brick_y_pos);
+                Ball_Direction = -Ball_Direction;
+            }
+        }
+        brick_y_pos -= Cell_Height;
+    }
 }
 //--------------------------------------------------------------------------------------------------------------
 void Move_Ball()
 {
     int next_x_pos, next_y_pos;
     int max_x_pos = Max_X_Pos - Ball_Size;
+    int platform_y_pos = Platform_Y_Pos - Ball_Size;
 
     Prev_Ball_Rect = Ball_Rect;
 
-    next_x_pos = Ball_X_pos + (int)(Ball_Speed * cos(Ball_Direction));
-    next_y_pos = Ball_Y_pos - (int)(Ball_Speed * sin(Ball_Direction));
+    next_x_pos = Ball_X_Pos + (int)(Ball_Speed * cos(Ball_Direction));
+    next_y_pos = Ball_Y_Pos - (int)(Ball_Speed * sin(Ball_Direction));
 
-    // Correction the position when reflected
+    // Correction the position when reflected of the border
     if (next_x_pos < Border_X_Offset)
     {
         next_x_pos = Level_X_Offset - (next_x_pos - Level_X_Offset);
@@ -426,7 +448,7 @@ void Move_Ball()
 
     if (next_y_pos < Border_Y_Offset)
     {
-        next_y_pos = Level_Y_Offset - (next_y_pos - Level_Y_Offset);
+        next_y_pos = Border_Y_Offset - (next_y_pos - Border_Y_Offset);
         Ball_Direction = -Ball_Direction;
     }
 
@@ -442,12 +464,25 @@ void Move_Ball()
         Ball_Direction = M_PI + (M_PI - Ball_Direction);
     }
 
-    // Moving the ball
-    Ball_X_pos = next_x_pos;
-    Ball_Y_pos = next_y_pos;
+    // Correction the position when reflected of the platform
+    if (next_y_pos > platform_y_pos)
+    {
+        if (next_x_pos >= Platform_X_Pos && next_x_pos <= Platform_X_Pos + Platform_Width)
+        {
+            next_y_pos = platform_y_pos - (next_y_pos - platform_y_pos);
+            Ball_Direction = M_PI + (M_PI - Ball_Direction);
+        }
+    }
 
-    Ball_Rect.left = Ball_X_pos * Global_Scale;
-    Ball_Rect.top = Ball_Y_pos * Global_Scale;
+    // Correction the position when reflected of the brick
+    Check_Level_Brick_Hit(next_y_pos);
+
+    // Moving the ball
+    Ball_X_Pos = next_x_pos;
+    Ball_Y_Pos = next_y_pos;
+
+    Ball_Rect.left = Ball_X_Pos * Global_Scale;
+    Ball_Rect.top = Ball_Y_Pos * Global_Scale;
     Ball_Rect.right = Ball_Rect.left + Ball_Size * Global_Scale;
     Ball_Rect.bottom = Ball_Rect.top + Ball_Size * Global_Scale;
 
